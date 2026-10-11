@@ -17,7 +17,7 @@
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --ink: #eef1fb;
     --ink-2: #a5adc8;
     --bg: #0f1424;
@@ -27,6 +27,15 @@
     color-scheme: dark;
   }
 }
+:root[data-theme="dark"] {
+    --ink: #eef1fb;
+    --ink-2: #a5adc8;
+    --bg: #0f1424;
+    --card: #182036;
+    --line: #29324d;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 30px rgba(0, 0, 0, .35);
+    color-scheme: dark;
+  }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
@@ -83,7 +92,7 @@ h3 { font-size: 17px; }
 .tabbar button > * { position: relative; z-index: 1; }
 .tabbar button.on { color: var(--accent); }
 .tab-pill { position: absolute !important; inset: 0; background: var(--accent-soft); border-radius: 16px; z-index: 0 !important; }
-@media (prefers-color-scheme: dark) { .tab-pill { background: color-mix(in srgb, var(--accent) 22%, transparent); } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tab-pill { background: color-mix(in srgb, var(--accent) 22%, transparent); } }
 
 .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 80; background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 999px; font-weight: 700; box-shadow: var(--shadow); white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis; }
 
