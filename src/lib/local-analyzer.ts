@@ -1,7 +1,7 @@
 // Analyse locale de secours, utilisée quand aucune clé Claude n'est configurée côté serveur.
 // Volontairement prudente : elle ne retient que des faits explicitement formulés et
 // laisse vide ce qu'elle ne sait pas. Tout est montré pour validation avant écriture.
-import type { Analysis, Meeting, PersonDate } from './analysis-schema';
+import { emptyX, type Analysis, type ExchangeX, type Meeting, type PersonDate } from './analysis-schema';
 import { empty, extractFacts, today, type Exchange, type RecordItem } from './debrief-model';
 import { findFrenchDate } from './dates';
 
@@ -27,12 +27,14 @@ function segment(text: string, items: RecordItem[]) {
   const groups: string[][] = [];
   let key = '';
   for (const s of sentences(text)) {
+    // Un profil cité comme ressource pour le besoin en cours reste dans le même sujet.
+    const asResource = /\b(?:positionn|pensé à|en tête|identifié|propos|présenter)/i.test(s);
     const subject =
       known(items, 'account', s)[0]?.data.name ||
       s.match(new RegExp(`\\b(?:chez|client|compte)\\s+(${NAME})`, 'u'))?.[1] ||
       s.match(new RegExp(`\\bcandidat(?:e)?\\s+(${NAME})`, 'u'))?.[1] ||
-      known(items, 'candidate', s)[0]?.data.name ||
-      known(items, 'consultant', s)[0]?.data.name ||
+      (!asResource && known(items, 'candidate', s)[0]?.data.name) ||
+      (!asResource && known(items, 'consultant', s)[0]?.data.name) ||
       '';
     if (subject && norm(subject) !== key && groups.length && key) groups.push([]);
     if (!groups.length) groups.push([]);
@@ -42,8 +44,8 @@ function segment(text: string, items: RecordItem[]) {
   return groups.map((g) => g.join(' ')).filter(Boolean);
 }
 
-function analyseSegment(text: string, items: RecordItem[]): Exchange {
-  const e: Exchange = { ...empty(), story: text };
+function analyseSegment(text: string, items: RecordItem[]): ExchangeX {
+  const e: ExchangeX = emptyX({ ...empty(), story: text });
   Object.assign(e, extractFacts(text, items, e));
   const pick = (re: RegExp) => text.match(re)?.[1]?.trim() || '';
 
@@ -74,6 +76,17 @@ function analyseSegment(text: string, items: RecordItem[]): Exchange {
   }
   if (/\b(?:proposition envoyée|on a envoyé la proposition)\b/i.test(text)) { e.stage = 'Proposition'; e.evidence = 'Proposition envoyée (mentionnée dans le récit)'; }
   if (/\b(?:signé|on a gagné|c'est gagné)\b/i.test(text)) { e.stage = 'Gagné'; e.evidence = 'Signature mentionnée dans le récit'; }
+  if (e.need && !e.needDeadline) {
+    const dl = pick(/\b(?:démarrage|démarrer|démarre|début de mission|deadline|pour (?:le |début |fin |mi-)|commencer|start)\s*([^.;]{2,40})/i);
+    if (/asap|au plus vite|urgent|dès que possible|tout de suite/i.test(text)) e.needDeadline = 'ASAP';
+    else if (dl) e.needDeadline = findFrenchDate(dl) || clean(dl);
+  }
+  if (e.need && !e.resources) {
+    const named = [...known(items, 'candidate', text), ...known(items, 'consultant', text)].map((p) => p.data.name).filter((n) => n !== e.candidate || /positionn|propos|pens/i.test(text));
+    const said = pick(/\b(?:j'ai|on a|j’ai)\s+(?:déjà\s+)?(?:identifié|positionné|proposé|pensé à|en tête)\s+([^.;]{3,60})/i);
+    e.resources = Array.from(new Set([...named, ...(said ? [clean(said)] : [])])).join(', ');
+    if (!e.resources && /\b(?:personne|aucun profil|pas de profil|rien)\b.*\b(?:identifié|en tête)/i.test(text)) e.resources = 'Aucun pour l’instant';
+  }
   return e;
 }
 

@@ -12,6 +12,8 @@ import { Me } from './screens/Me';
 import { Onboarding } from './screens/Onboarding';
 import { Composer, Radar } from './screens/Radar';
 import { Session } from './screens/Session';
+import { Wrapped } from './screens/Wrapped';
+import type { Period } from './lib/wrapped';
 
 type Tab = 'home' | 'radar' | 'crm' | 'me';
 
@@ -24,6 +26,7 @@ export default function App() {
   const [open, setOpen] = useState<RecordItem | null>(null);
   const [insight, setInsight] = useState<Insight | null>(null);
   const [toast, setToast] = useState('');
+  const [wrap, setWrap] = useState<Period | null>(null);
   const clearToast = useCallback(() => setToast(''), []);
 
   const style = styleOf(profile);
@@ -55,10 +58,10 @@ export default function App() {
       <main>
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-            {tab === 'home' && <Home profile={profile} store={store} onStart={() => setSession(true)} onOpen={setOpen} onInsight={(i) => (i.compose ? setInsight(i) : setOpen(store.items.find((r) => r.id === i.recordId) || null))} onTaskDone={taskDone} goRadar={() => setTab('radar')} />}
+            {tab === 'home' && <Home profile={profile} store={store} onStart={() => setSession(true)} onOpen={setOpen} onInsight={(i) => (i.compose ? setInsight(i) : setOpen(store.items.find((r) => r.id === i.recordId) || null))} onTaskDone={taskDone} goRadar={() => setTab('radar')} onWrap={() => setWrap('week')} />}
             {tab === 'radar' && <Radar store={store} onInsight={setInsight} onOpen={setOpen} />}
             {tab === 'crm' && <Crm store={store} onOpen={setOpen} />}
-            {tab === 'me' && <Me profile={profile} store={store} onEdit={() => setEditing(true)} onProfile={updateProfile} onToast={setToast} />}
+            {tab === 'me' && <Me profile={profile} store={store} onEdit={() => setEditing(true)} onProfile={updateProfile} onToast={setToast} onWrap={setWrap} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -75,6 +78,7 @@ export default function App() {
       <RecordSheet record={open} store={store} onClose={() => setOpen(null)} onOpen={setOpen} onSaved={setToast} />
       <Composer insight={insight} store={store} sender={profile.name} onClose={() => setInsight(null)} onSent={setToast} />
       <AnimatePresence>{session && <Session profile={profile} store={store} onClose={() => setSession(false)} />}</AnimatePresence>
+      <AnimatePresence>{wrap && <Wrapped profile={profile} items={store.items} period={wrap} onClose={() => setWrap(null)} />}</AnimatePresence>
       <Toast text={toast} onDone={clearToast} />
     </div>
   );

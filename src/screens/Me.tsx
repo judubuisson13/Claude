@@ -6,8 +6,9 @@ import { Pill } from '../components/ui';
 import { gameProgress, kpis } from '../lib/game';
 import { copilotOf, styleOf, worlds, type Profile, type WorldId } from '../lib/profile';
 import type { Store } from '../lib/store';
+import type { Period } from '../lib/wrapped';
 
-export function Me({ profile, store, onEdit, onProfile, onToast }: { profile: Profile; store: Store; onEdit: () => void; onProfile: (p: Profile) => void; onToast: (t: string) => void }) {
+export function Me({ profile, store, onEdit, onProfile, onToast, onWrap }: { profile: Profile; store: Store; onEdit: () => void; onProfile: (p: Profile) => void; onToast: (t: string) => void; onWrap: (p: Period) => void }) {
   const style = styleOf(profile);
   const copilot = copilotOf(profile);
   const p = gameProgress(store.items);
@@ -40,6 +41,11 @@ export function Me({ profile, store, onEdit, onProfile, onToast }: { profile: Pr
         </div>
         <Copilot id={copilot.id} color={copilot.color} size={70} />
       </div>
+
+      <section className="card">
+        <header className="card-head"><h3>Tes Wraps</h3></header>
+        <div className="chips"><button className="chip" onClick={() => onWrap('week')}>🎞️ Semaine</button><button className="chip" onClick={() => onWrap('month')}>📆 Mois</button><button className="chip" onClick={() => onWrap('year')}>🏆 Année</button></div>
+      </section>
 
       <section className="card">
         <header className="card-head"><h3>Univers</h3></header>

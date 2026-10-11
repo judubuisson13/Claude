@@ -19,6 +19,8 @@ export const ExchangeSchema = z.object({
   opportunityId: z.string().describe("Identifiant d'une opportunité existante si elle est clairement concernée, sinon vide"),
   stage: z.enum(STAGES).describe('Étape réellement confirmée ; « À qualifier » par défaut'),
   evidence: z.string().describe("Ce qui prouve l'étape si différente de « À qualifier », sinon vide"),
+  needDeadline: z.string().describe('Date de démarrage / deadline du besoin (AAAA-MM-JJ si date précise, sinon formulation courte comme « ASAP » ou « début novembre »), ou vide'),
+  resources: z.string().describe('Candidats ou consultants déjà identifiés / positionnés sur ce besoin, séparés par des virgules, ou vide'),
   action: z.string().describe('Prochaine action concrète, ou vide'),
   owner: z.string().describe('Responsable de la prochaine action ; « Moi » par défaut'),
   due: z.string().describe('Date de la prochaine action au format AAAA-MM-JJ, ou vide'),
@@ -54,7 +56,9 @@ export const AnalysisSchema = z.object({
 });
 
 // `stage` reste une chaîne côté application (compatibilité v11), l'énumération ne contraint que la sortie IA.
-export type Analysis = Omit<z.infer<typeof AnalysisSchema>, 'exchanges'> & { exchanges: Exchange[] };
+export type ExchangeX = Exchange & { needDeadline: string; resources: string };
+export const emptyX = (base: Exchange): ExchangeX => ({ needDeadline: '', resources: '', ...base });
+export type Analysis = Omit<z.infer<typeof AnalysisSchema>, 'exchanges'> & { exchanges: ExchangeX[] };
 export type Meeting = z.infer<typeof MeetingSchema>;
 export type PersonDate = z.infer<typeof PersonDateSchema>;
 

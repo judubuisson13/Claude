@@ -11,9 +11,9 @@ import { computeInsights, sessionAgenda, type Insight } from '../lib/insights';
 import { copilotOf, styleOf, worlds, type Profile } from '../lib/profile';
 import type { Store } from '../lib/store';
 
-type Props = { profile: Profile; store: Store; onStart: () => void; onOpen: (r: RecordItem) => void; onInsight: (i: Insight) => void; onTaskDone: (t: RecordItem) => void; goRadar: () => void };
+type Props = { profile: Profile; store: Store; onStart: () => void; onOpen: (r: RecordItem) => void; onInsight: (i: Insight) => void; onTaskDone: (t: RecordItem) => void; goRadar: () => void; onWrap: () => void };
 
-export function Home({ profile, store, onStart, onOpen, onInsight, onTaskDone, goRadar }: Props) {
+export function Home({ profile, store, onStart, onOpen, onInsight, onTaskDone, goRadar, onWrap }: Props) {
   const style = styleOf(profile);
   const copilot = copilotOf(profile);
   const items = store.items;
@@ -102,7 +102,7 @@ export function Home({ profile, store, onStart, onOpen, onInsight, onTaskDone, g
       </header>
 
       <section className="world-card-big">
-        <World world={profile.world} items={items} onPick={onOpen} />
+        <World world={profile.world} items={items} level={p.level} onPick={onOpen} />
         <div className="world-caption">{worlds[profile.world].title} · touche un {worlds[profile.world].unit} pour ouvrir la fiche</div>
       </section>
 
@@ -114,6 +114,10 @@ export function Home({ profile, store, onStart, onOpen, onInsight, onTaskDone, g
           <span>{agenda.length ? `${agenda.length} sujet${agenda.length > 1 ? 's' : ''} préparé${agenda.length > 1 ? 's' : ''} : ${agenda.slice(0, 2).map((a) => a.label).join(', ')}` : 'Fiches, next steps et événements créés automatiquement.'}</span>
         </div>
         <span className="ritual-mic"><Mic size={26} /></span>
+      </motion.button>
+
+      <motion.button className="wrap-teaser" onClick={onWrap} whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }}>
+        <span>🎞️</span><div><strong>Ton Wrap de la semaine</strong><small>Ce qui s’est passé pour toi, en stories</small></div><ArrowRight size={18} />
       </motion.button>
 
       <div className="home-grid">{order.map((o) => sections[o])}</div>

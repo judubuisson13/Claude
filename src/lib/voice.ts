@@ -54,7 +54,13 @@ export function useVoice(onFinal: (text: string) => void) {
   }, []);
 
   const start = useCallback(() => {
-    if (!Ctor) { setError('La dictée n’est pas disponible sur ce navigateur. Tu peux écrire ton récit.'); return; }
+    if (!Ctor) { setError('Dictée intégrée indisponible sur ce navigateur : utilise la dictée de ton clavier (icône 🎤) dans la zone de texte.'); return; }
+    // Aperçu claude.ai : le cadre de la page n'a pas accès au micro, la dictée du clavier prend le relais.
+    if ((window as any).claude) {
+      setError('Le micro n’est pas accessible dans cet aperçu en ligne. Touche la zone de texte et utilise la dictée de ton clavier : icône 🎤 sur iPhone / Android, Win + H sur Windows, deux fois Fn sur Mac.');
+      document.querySelector<HTMLTextAreaElement>('.transcript textarea')?.focus();
+      return;
+    }
     setError('');
     const r: Rec = new Ctor();
     r.lang = 'fr-FR';
@@ -70,7 +76,7 @@ export function useVoice(onFinal: (text: string) => void) {
       setInterim(partial);
     };
     r.onerror = (e: any) => {
-      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { setError('Micro refusé. Autorise-le dans ton navigateur, ou écris ton récit.'); wanted.current = false; }
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') { setError((window as any).claude ? 'Le micro n’est pas accessible dans cet aperçu. Touche la zone de texte et utilise la dictée de ton clavier (icône 🎤 sur iPhone / Android, Win + H sur Windows, Fn Fn sur Mac).' : 'Micro refusé. Autorise-le dans ton navigateur, ou utilise la dictée de ton clavier.'); wanted.current = false; setListening(false); }
     };
     r.onend = () => {
       // Chrome coupe après un silence : on relance tant que l'utilisateur n'a pas arrêté.

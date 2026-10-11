@@ -1,7 +1,7 @@
 // Extension v12 du plan de débrief : on garde `buildPlan` (v11) tel quel pour les
 // comptes/contacts/besoins/tâches, et on ajoute les rendez-vous et anniversaires détectés.
-import type { Meeting, PersonDate } from './analysis-schema';
-import { buildPlan, type Exchange, type RecordItem } from './debrief-model';
+import type { ExchangeX, Meeting, PersonDate } from './analysis-schema';
+import { buildPlan, today, type RecordItem } from './debrief-model';
 
 const norm = (s: string) => s.trim().toLocaleLowerCase('fr');
 
@@ -9,13 +9,25 @@ function newId() {
   return crypto.randomUUID();
 }
 
-export type PlanInput = { exchanges: Exchange[]; meetings: Meeting[]; birthdays: PersonDate[] };
+export type PlanInput = { exchanges: ExchangeX[]; meetings: Meeting[]; birthdays: PersonDate[] };
 
 export function buildFullPlan(input: PlanInput, items: RecordItem[]): RecordItem[] {
   const plan = buildPlan(input.exchanges, items);
   const out = new Map(plan.map((r) => [r.id, r]));
   const original = new Map(items.map((i) => [i.id, i]));
   const latest = () => Array.from(new Map([...items, ...out.values()].map((i) => [i.id, i])).values());
+
+  // v12 : deadline du besoin et ressources identifiées, reliées aux fiches du vivier quand elles existent.
+  for (const e of input.exchanges) {
+    if (!e.need?.trim() || (!e.needDeadline && !e.resources)) continue;
+    const opp = Array.from(out.values()).find((r) => r.kind === 'opportunity' && norm(r.data.title || '') === norm(e.need) && norm(r.data.client || '') === norm(e.client));
+    if (!opp) continue;
+    const names = (e.resources || '').split(',').map((x) => x.trim()).filter(Boolean);
+    const resourceIds = names.map((n) => latest().find((i) => (i.kind === 'candidate' || i.kind === 'consultant') && norm(i.data.name || '') === norm(n))?.id).filter(Boolean) as string[];
+    out.set(opp.id, { ...opp, data: { ...opp.data, ...(e.needDeadline ? { deadline: e.needDeadline } : {}), ...(e.resources ? { resources: e.resources } : {}), ...(resourceIds.length ? { resourceIds: Array.from(new Set([...(opp.data.resourceIds || []), ...resourceIds])) } : {}) } });
+  }
+  // Date de dernière rencontre des candidats évoqués (sert au rapprochement « vu il y a 2 mois »).
+  for (const r of Array.from(out.values())) if (r.kind === 'candidate') out.set(r.id, { ...r, data: { ...r.data, seenAt: today() } });
 
   for (const m of input.meetings) {
     if (!m.title.trim() || !m.date) continue;

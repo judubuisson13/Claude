@@ -53,3 +53,21 @@ export function kpis(items: RecordItem[]) {
     debriefs: count('activity'),
   };
 }
+
+export const COVERAGE_LABELS = ['Compte', 'Interlocuteur', 'Fonction', 'Service', 'Récit', 'Action datée'];
+
+/** Même jauge que `relationshipCoverage`, élément par élément (pour montrer ce qui a fait pousser quoi). */
+export function coverageDetail(items: RecordItem[], client: string): boolean[] {
+  const account = items.find((i) => i.kind === 'account' && norm(i.data.name) === norm(client));
+  const contacts = items.filter((i) => i.kind === 'contact' && i.data.accountId === account?.id);
+  const activities = items.filter((i) => i.kind === 'activity' && (i.data.accounts || []).some((s: string) => norm(s) === norm(client)));
+  const ds = activities.map((i) => i.data.details || {});
+  return [
+    !!account,
+    contacts.length > 0,
+    contacts.some((i) => i.data.role && i.data.role !== 'À préciser') || ds.some((d) => d.role),
+    contacts.some((i) => i.data.service) || ds.some((d) => d.service),
+    activities.some((i) => i.data.text?.trim()),
+    items.some((i) => i.kind === 'task' && i.data.due && (i.data.accountId === account?.id || norm(i.data.client) === norm(client))) || ds.some((d) => d.action && d.due),
+  ];
+}

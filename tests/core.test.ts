@@ -6,6 +6,11 @@ import { dateAnswer, empty, gameProgress, today, type RecordItem } from '../src/
 import { computeInsights } from '../src/lib/insights';
 import { analyseLocally } from '../src/lib/local-analyzer';
 import { buildFullPlan } from '../src/lib/plan';
+import { emptyX } from '../src/lib/analysis-schema';
+import { checklist, completeness, nextMissing } from '../src/lib/completeness';
+import { matchNeed } from '../src/lib/matching';
+import { wrapped } from '../src/lib/wrapped';
+import { demoItems } from '../src/lib/demo';
 
 const LUMENA = 'Client : Lumena ; interlocuteur : Alex Exemple ; fonction : Responsable data ; service : Plateforme ; besoin : Data engineer ; compétences : Python, SQL ; prochaine action : Obtenir le budget ; échéance : 15/10/2026.';
 
@@ -55,7 +60,7 @@ test('compte existant enrichi sans doublon, contacts liés', () => {
 });
 
 test('candidat sans CV : manque explicitement indiqué', () => {
-  const plan = buildFullPlan({ exchanges: [{ ...empty(), candidate: 'Nina Test', candidateRole: 'Dev React', story: 'Bon échange' }], meetings: [], birthdays: [] }, []);
+  const plan = buildFullPlan({ exchanges: [emptyX({ ...empty(), candidate: 'Nina Test', candidateRole: 'Dev React', story: 'Bon échange' })], meetings: [], birthdays: [] }, []);
   const c = plan.find((r) => r.kind === 'candidate')!;
   assert.equal(c.data.cvRequired, true);
   assert.ok(plan.find((r) => r.kind === 'activity')!.data.missing.includes('CV à ajouter'));
@@ -113,4 +118,47 @@ test('SQLite : contrats de version v11, transaction tout-ou-rien, répétition i
   const z = listRecords(db, 'u').find((x) => x.id === 'z')!;
   assert.equal(z.version, 4);
   assert.equal(JSON.parse(listRecords(db, 'u').find((x) => x.id === 'a')!.data).name, 'A3');
+});
+
+test('checklist : relance sur les infos manquantes, dans l’ordre, et « je ne sais pas » respecté', () => {
+  const e = emptyX({ ...empty(), client: 'Lumena', contact: 'Alex', need: 'Data engineer', skills: 'Python' });
+  const keys = checklist(e).filter((c) => !c.ok).map((c) => c.key);
+  assert.deepEqual(keys, ['role', 'budget', 'needDeadline', 'resources', 'action']);
+  const first = nextMissing([e], new Set())!;
+  assert.equal(first.item.key, 'role');
+  const after = nextMissing([e], new Set(['lumena::role']))!;
+  assert.equal(after.item.key, 'budget');
+  assert.ok(completeness([e]) > 0.4 && completeness([e]) < 0.7);
+});
+
+test('analyse locale : deadline et ressources identifiées', () => {
+  const items = demoItems('2026-10-11');
+  const a = analyseLocally('Chez Nova Industrie avec Julie Fontaine, ils cherchent un data engineer Python SQL, démarrage le 2 novembre. J’ai déjà pensé à Nora Haddad.', items);
+  const e = a.exchanges[0];
+  assert.equal(e.needDeadline, '2026-11-02');
+  assert.match(e.resources, /Nora Haddad/);
+  const plan = buildFullPlan({ exchanges: a.exchanges, meetings: [], birthdays: [] }, items);
+  const opp = plan.find((r) => r.kind === 'opportunity')!;
+  assert.equal(opp.data.deadline, '2026-11-02');
+  assert.deepEqual(opp.data.resourceIds, ['v3']);
+});
+
+test('matching vivier : compétences trouvées / manquantes et ancienneté', () => {
+  const items = demoItems('2026-10-11');
+  const m = matchNeed('Python, SQL, Airflow', items, { base: '2026-10-11' });
+  assert.equal(m[0].person.data.name, 'Nora Haddad');
+  assert.equal(m[0].score, 1);
+  assert.match(m[0].seen, /2 mois/);
+  assert.ok(m.every((x) => x.matched.length > 0));
+});
+
+test('wrap : semaine, mois, année cohérents', () => {
+  const items = demoItems('2026-10-11');
+  const w = wrapped(items, 'week', '2026-10-11');
+  const mth = wrapped(items, 'month', '2026-10-11');
+  const y = wrapped(items, 'year', '2026-10-11');
+  assert.ok(w.debriefs <= mth.debriefs && mth.debriefs <= y.debriefs);
+  assert.ok(y.debriefs >= 15);
+  assert.ok(y.clients.length >= 3);
+  assert.ok(y.persona.title.length > 0);
 });

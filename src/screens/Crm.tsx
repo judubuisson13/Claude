@@ -7,10 +7,11 @@ import { relativeDay, shortDate } from '../lib/dates';
 import { relationshipCoverage } from '../lib/game';
 import { describe, KIND_LABEL } from '../lib/plan';
 import type { Store } from '../lib/store';
+import { matchNeed } from '../lib/matching';
 
 const TABS = ['account', 'contact', 'opportunity', 'task', 'consultant', 'candidate', 'meeting', 'activity', 'topic'] as const;
 const TAB_LABEL: Record<string, string> = { account: 'Comptes', contact: 'Contacts', opportunity: 'Besoins', task: 'Next steps', consultant: 'Consultants', candidate: 'Candidats', meeting: 'Agenda', activity: 'Comptes rendus', topic: 'Sujets chauds' };
-const HIDDEN = new Set(['details', 'relatedIds', 'links', 'missing', 'accounts', 'consultants', 'candidates', 'opportunities', 'actions', 'steps', 'requirements']);
+const HIDDEN = new Set(['resourceIds', 'details', 'relatedIds', 'links', 'missing', 'accounts', 'consultants', 'candidates', 'opportunities', 'actions', 'steps', 'requirements']);
 
 export function Crm({ store, onOpen }: { store: Store; onOpen: (r: RecordItem) => void }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>('account');
@@ -104,6 +105,16 @@ export function RecordSheet({ record, store, onClose, onOpen, onSaved }: { recor
           ))}
           {isNew && fields.length < 2 && <p className="muted">Commence par le nom ; les autres champs seront ajoutés par tes débriefs.</p>}
         </div>
+        {record.kind === 'opportunity' && (() => {
+          const ms = matchNeed(record.data.requirements?.length ? record.data.requirements : record.data.title || '', store.items, { exclude: record.data.resourceIds });
+          return ms.length > 0 && (
+            <div className="linked">
+              <strong>🎯 Profils du vivier qui correspondent</strong>
+              {ms.map((m) => <button key={m.person.id} className="linked-row" onClick={() => onOpen(m.person)}><Pill tone={m.score >= 0.75 ? 'good' : 'info'}>{m.matched.length}/{m.matched.length + m.missing.length}</Pill> {m.person.data.name} <small className="muted">· {m.seen} · {m.matched.join(', ')}{m.missing.length ? ' · manque ' + m.missing.join(', ') : ''}</small></button>)}
+              <p className="fineprint">Concordance de compétences, pas une probabilité de réussite.</p>
+            </div>
+          );
+        })()}
         {linked.length > 0 && (
           <div className="linked">
             <strong>Fiches reliées</strong>

@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { z } from 'zod';
 import { AnalysisSchema, type Analysis, type ComposeKind } from '../src/lib/analysis-schema';
+import { ANALYSE_SYSTEM, contextBlock, normalizeAnalysis, type Known } from '../src/lib/prompt';
 
 const MODEL = process.env.TEMPO_MODEL || 'claude-opus-5-5';
 const EFFORT = (process.env.TEMPO_EFFORT || 'medium') as 'low' | 'medium' | 'high';
@@ -16,38 +17,18 @@ function getClient() {
   return client;
 }
 
-const ANALYSE_SYSTEM = `Tu es le copilote de Tempo Play, l'assistant d'un business manager en ESN (comptes clients, consultants en mission, candidats, besoins).
-Chaque jour, il te raconte sa journée à l'oral pendant 15 à 20 minutes. Ton rôle : transformer ce récit en mises à jour CRM fiables, reliées entre elles.
 
-Règles :
-- Ne retiens que ce qui est dit ou clairement implicite. N'invente jamais un budget, un nom, une fonction, une date ou une étape. Inconnu = chaîne vide.
-- Crée un élément "exchanges" par sujet distinct (un compte client, un candidat ou un consultant). Un échange client peut citer un candidat ou un consultant s'ils sont liés au même sujet.
-- Réutilise l'orthographe exacte des fiches existantes fournies quand la personne ou le compte est reconnu. Si un nom est ambigu (homonymes), ne choisis pas : laisse le nom tel que dit et pose la question dans "followUp".
-- "opportunityId" seulement si une opportunité existante fournie est clairement concernée.
-- "stage" : « À qualifier » sauf preuve explicite ; dans ce cas, renseigne "evidence".
-- "action" : le prochain pas concret ; "due" en AAAA-MM-JJ, en résolvant les dates relatives (demain, lundi…) à partir de la date du jour, fuseau Europe/Paris.
-- "meetings" : seulement des rendez-vous futurs avec une date.
-- "birthdays" : seulement si un anniversaire est explicitement mentionné.
-- "followUp" : une seule question, la plus utile, sur ce qui manque (interlocuteur, fonction, budget, compétences, prochaine action, date). Ne redemande jamais ce qui est déjà connu.
-- "reply" : une phrase naturelle, chaleureuse, au tutoiement, qui montre que tu as compris (pas de liste).
-- Les informations personnelles (âge, anniversaire) ne servent jamais à évaluer un candidat.`;
 
 export type AnalyseContext = {
   today: string;
   persona?: string;
-  known: { accounts: string[]; contacts: string[]; candidates: string[]; consultants: string[]; opportunities: string[] };
+  known: Known;
   history: { role: 'copilot' | 'user'; text: string }[];
 };
 
 export async function analyseWithClaude(text: string, ctx: AnalyseContext): Promise<Analysis> {
   const context = [
-    `Date du jour : ${ctx.today}`,
-    ctx.persona ? `Style du copilote choisi par l'utilisateur : ${ctx.persona}` : '',
-    `Comptes connus : ${ctx.known.accounts.join(' | ') || 'aucun'}`,
-    `Contacts connus (nom — compte — fonction) : ${ctx.known.contacts.join(' | ') || 'aucun'}`,
-    `Candidats connus : ${ctx.known.candidates.join(' | ') || 'aucun'}`,
-    `Consultants connus : ${ctx.known.consultants.join(' | ') || 'aucun'}`,
-    `Opportunités ouvertes (id — intitulé — compte) : ${ctx.known.opportunities.join(' | ') || 'aucune'}`,
+    contextBlock(ctx.today, ctx.known, ctx.persona),
     ctx.history.length ? `Échanges précédents de la session :\n${ctx.history.map((h) => `${h.role === 'copilot' ? 'Copilote' : 'Utilisateur'} : ${h.text}`).join('\n')}` : '',
   ].filter(Boolean).join('\n');
 
@@ -63,7 +44,7 @@ export async function analyseWithClaude(text: string, ctx: AnalyseContext): Prom
   });
   if (response.stop_reason === 'refusal') throw new Error('Analyse refusée par le modèle.');
   if (!response.parsed_output) throw new Error('Réponse du modèle illisible.');
-  return response.parsed_output;
+  return normalizeAnalysis(response.parsed_output);
 }
 
 const ComposeSchema = z.object({ subject: z.string(), message: z.string() });

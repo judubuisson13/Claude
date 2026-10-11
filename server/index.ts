@@ -6,7 +6,8 @@ import { ComposeKinds, type ComposeKind } from '../src/lib/analysis-schema';
 import { today, type RecordItem } from '../src/lib/debrief-model';
 import { templateMessage } from '../src/lib/insights';
 import { analyseLocally } from '../src/lib/local-analyzer';
-import { aiEnabled, analyseWithClaude, composeWithClaude, type AnalyseContext } from './ai';
+import { aiEnabled, analyseWithClaude, composeWithClaude } from './ai';
+import { knownContext } from '../src/lib/prompt';
 import { ConflictError, importRows, listRecords, openDb, writeBatch, writeOne } from './db';
 
 const PORT = Number(process.env.PORT || 8787);
@@ -40,16 +41,6 @@ function items(): RecordItem[] {
   return listRecords(db, USER).map((r) => ({ id: r.id, kind: r.kind, version: r.version, data: JSON.parse(r.data) }));
 }
 
-export function knownContext(list: RecordItem[]): AnalyseContext['known'] {
-  const accounts = new Map(list.filter((i) => i.kind === 'account').map((i) => [i.id, i.data.name]));
-  return {
-    accounts: [...accounts.values()].filter(Boolean),
-    contacts: list.filter((i) => i.kind === 'contact').map((i) => [i.data.name, accounts.get(i.data.accountId) || '?', i.data.role || ''].join(' — ')),
-    candidates: list.filter((i) => i.kind === 'candidate').map((i) => i.data.name),
-    consultants: list.filter((i) => i.kind === 'consultant').map((i) => `${i.data.name}${i.data.client ? ' (' + i.data.client + ')' : ''}`),
-    opportunities: list.filter((i) => i.kind === 'opportunity' && !['Gagné', 'Perdu'].includes(i.data.stage)).map((i) => [i.id, i.data.title, i.data.client].join(' — ')),
-  };
-}
 
 async function api(req: IncomingMessage, res: ServerResponse, path: string) {
   const method = req.method || 'GET';

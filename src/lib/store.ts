@@ -103,8 +103,29 @@ export async function analyse(text: string, opts: { items: RecordItem[]; demo: b
     });
     if (res.ok) return res.json();
   }
+  // Démo en ligne (sans serveur) : on demande à Claude via la capacité `sample` de la page, si elle est offerte.
+  const viaSample = await analyseWithSample(text, opts).catch(() => null);
+  if (viaSample) return { analysis: viaSample, engine: 'claude' };
   const { analyseLocally } = await import('./local-analyzer');
   return { analysis: analyseLocally(text, opts.items), engine: 'local' };
+}
+
+let sampleRef: Promise<any> | null = null;
+export function sampleCapability(): Promise<any> {
+  const c = (globalThis as any).claude;
+  if (!c?.use) return Promise.resolve(null);
+  if (!sampleRef) sampleRef = c.use('sample').catch(() => null);
+  return sampleRef as Promise<any>;
+}
+
+async function analyseWithSample(text: string, opts: { items: RecordItem[]; persona: string }) {
+  const sample = await sampleCapability();
+  if (!sample) return null;
+  const { ANALYSE_SYSTEM, ANALYSE_FORMAT, contextBlock, knownContext, normalizeAnalysis } = await import('./prompt');
+  const { today } = await import('./debrief-model');
+  const prompt = `${ANALYSE_SYSTEM}\n\n${contextBlock(today(), knownContext(opts.items), opts.persona)}\n\nRécit à analyser (dialogue de la session) :\n\"\"\"${text}\"\"\"\n\n${ANALYSE_FORMAT}`;
+  const raw = await sample.json(prompt, { modelTier: 'quick' });
+  return normalizeAnalysis(raw);
 }
 
 export async function compose(body: { kind: string; person: string; details?: string; client?: string; sender?: string; tone?: string }, reachable: boolean) {
