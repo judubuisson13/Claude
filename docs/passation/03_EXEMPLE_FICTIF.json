@@ -1,0 +1,187 @@
+{
+  "warning": "EXEMPLE FICTIF, généré par buildPlan du code joint. Pas un export de production. Ne pas importer automatiquement.",
+  "exchange": {
+    "client": "Lumena (exemple fictif)",
+    "contact": "Alex Exemple",
+    "role": "Responsable data",
+    "service": "Plateforme",
+    "story": "Rencontre fictive : recherche de Data engineer. Budget à confirmer.",
+    "need": "Data engineer",
+    "budget": "",
+    "skills": "Python, SQL",
+    "opportunityId": "",
+    "stage": "À qualifier",
+    "evidence": "",
+    "action": "Obtenir le budget",
+    "owner": "Moi",
+    "due": "2026-10-15",
+    "candidate": "",
+    "candidateRole": "",
+    "candidateSkills": "",
+    "availability": "",
+    "consultant": "",
+    "consultantRole": "",
+    "hotTopic": "Budget à clarifier"
+  },
+  "items": [
+    {
+      "id": "9b5f6d53-799c-4845-9b75-14bea14598ed",
+      "kind": "account",
+      "version": 1,
+      "data": {
+        "name": "Lumena (exemple fictif)",
+        "sector": "À préciser",
+        "status": "Prospect",
+        "technologies": "Python, SQL",
+        "positioning": "Data engineer",
+        "lastContact": "2026-10-11",
+        "nextContact": "2026-10-15",
+        "cadence": 30
+      }
+    },
+    {
+      "id": "68d18b32-356a-4bf1-9305-0624751d1777",
+      "kind": "contact",
+      "version": 1,
+      "data": {
+        "name": "Alex Exemple",
+        "role": "Responsable data",
+        "service": "Plateforme",
+        "accountId": "9b5f6d53-799c-4845-9b75-14bea14598ed",
+        "influence": "À qualifier",
+        "managerId": ""
+      }
+    },
+    {
+      "id": "4b6506da-a3a7-4fea-9fbe-c435deda6ab9",
+      "kind": "opportunity",
+      "version": 1,
+      "data": {
+        "title": "Data engineer",
+        "client": "Lumena (exemple fictif)",
+        "accountId": "9b5f6d53-799c-4845-9b75-14bea14598ed",
+        "contactId": "68d18b32-356a-4bf1-9305-0624751d1777",
+        "stage": "À qualifier",
+        "brief": "Rencontre fictive : recherche de Data engineer. Budget à confirmer.",
+        "requirements": [
+          "Python",
+          "SQL"
+        ],
+        "budgetNote": "À confirmer",
+        "stageEvidence": "",
+        "amount": 0
+      }
+    },
+    {
+      "id": "a006c6d6-9346-411c-a575-2396a76b5422",
+      "kind": "task",
+      "version": 1,
+      "data": {
+        "title": "Obtenir le budget",
+        "category": "Compte rendu",
+        "priority": "Haute",
+        "status": "À faire",
+        "due": "2026-10-15",
+        "owner": "Moi",
+        "accountId": "9b5f6d53-799c-4845-9b75-14bea14598ed",
+        "contactId": "68d18b32-356a-4bf1-9305-0624751d1777",
+        "opportunityId": "4b6506da-a3a7-4fea-9fbe-c435deda6ab9",
+        "candidateId": "",
+        "consultantId": "",
+        "client": "Lumena (exemple fictif)",
+        "sourceActivityId": "8841ca65-496e-4c9c-856f-cd1e70bc7180"
+      }
+    },
+    {
+      "id": "5a0b553b-19da-4568-bb1b-9e2115de179f",
+      "kind": "topic",
+      "version": 1,
+      "data": {
+        "title": "Budget à clarifier",
+        "client": "Lumena (exemple fictif)",
+        "accountId": "9b5f6d53-799c-4845-9b75-14bea14598ed",
+        "status": "Ouvert",
+        "priority": "Haute",
+        "urgency": "À surveiller",
+        "next": "Obtenir le budget",
+        "steps": [
+          "Obtenir le budget"
+        ],
+        "done": 0,
+        "nextStep": "Obtenir le budget",
+        "due": "2026-10-15",
+        "notes": "Rencontre fictive : recherche de Data engineer. Budget à confirmer.",
+        "taskId": "a006c6d6-9346-411c-a575-2396a76b5422"
+      }
+    },
+    {
+      "id": "8841ca65-496e-4c9c-856f-cd1e70bc7180",
+      "kind": "activity",
+      "version": 1,
+      "data": {
+        "title": "Débrief · Lumena (exemple fictif)",
+        "text": "Rencontre fictive : recherche de Data engineer. Budget à confirmer.",
+        "source": "Débrief guidé",
+        "createdAt": "2026-10-11T10:20:18.588Z",
+        "accounts": [
+          "Lumena (exemple fictif)"
+        ],
+        "consultants": [],
+        "candidates": [],
+        "opportunities": [
+          "Data engineer"
+        ],
+        "actions": [
+          "Obtenir le budget"
+        ],
+        "relatedIds": [
+          "9b5f6d53-799c-4845-9b75-14bea14598ed",
+          "68d18b32-356a-4bf1-9305-0624751d1777",
+          "4b6506da-a3a7-4fea-9fbe-c435deda6ab9",
+          "a006c6d6-9346-411c-a575-2396a76b5422",
+          "5a0b553b-19da-4568-bb1b-9e2115de179f"
+        ],
+        "links": [
+          "Lumena (exemple fictif) ↔ Alex Exemple",
+          "Lumena (exemple fictif) ↔ Data engineer",
+          "Lumena (exemple fictif) → Obtenir le budget"
+        ],
+        "missing": [
+          "Budget à confirmer"
+        ],
+        "qualityChecked": false,
+        "completeness": 88,
+        "tone": "À surveiller",
+        "details": {
+          "client": "Lumena (exemple fictif)",
+          "contact": "Alex Exemple",
+          "role": "Responsable data",
+          "service": "Plateforme",
+          "story": "Rencontre fictive : recherche de Data engineer. Budget à confirmer.",
+          "need": "Data engineer",
+          "budget": "",
+          "skills": "Python, SQL",
+          "opportunityId": "",
+          "stage": "À qualifier",
+          "evidence": "",
+          "action": "Obtenir le budget",
+          "owner": "Moi",
+          "due": "2026-10-15",
+          "candidate": "",
+          "candidateRole": "",
+          "candidateSkills": "",
+          "availability": "",
+          "consultant": "",
+          "consultantRole": "",
+          "hotTopic": "Budget à clarifier"
+        }
+      }
+    }
+  ],
+  "progress": {
+    "xp": 250,
+    "level": 1,
+    "next": 300,
+    "into": 250
+  }
+}

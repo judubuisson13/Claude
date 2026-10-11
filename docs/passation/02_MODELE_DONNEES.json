@@ -1,0 +1,56 @@
+{
+  "description": "Enveloppe actuelle, pas une normalisation nouvelle. Les champs métier sont détaillés dans la passation et dans le code.",
+  "table": "records",
+  "primaryKey": [
+    "user_id",
+    "id"
+  ],
+  "columns": {
+    "user_id": "text NOT NULL",
+    "id": "text NOT NULL",
+    "kind": "text NOT NULL",
+    "data": "text NOT NULL (JSON sérialisé)",
+    "version": "integer NOT NULL DEFAULT 1",
+    "updated_at": "text NOT NULL"
+  },
+  "recordItem": {
+    "id": "string",
+    "kind": "string",
+    "version": "integer >=1 pour une fiche enregistrée",
+    "data": "object"
+  },
+  "kinds": [
+    "task",
+    "meeting",
+    "consultant",
+    "candidate",
+    "opportunity",
+    "account",
+    "contact",
+    "topic",
+    "goal",
+    "billing",
+    "activity"
+  ],
+  "apiVersions": {
+    "POST /api/data": "version de départ : 0 création, n mise à jour",
+    "POST /api/debrief": "version cible : 1 création, n+1 mise à jour"
+  },
+  "links": {
+    "contact.accountId": "account.id",
+    "contact.managerId": "contact.id",
+    "opportunity.accountId": "account.id",
+    "opportunity.contactId": "contact.id",
+    "task.sourceActivityId": "activity.id",
+    "task.opportunityId": "opportunity.id",
+    "topic.taskId": "task.id",
+    "activity.relatedIds": "identifiants des fiches reliées",
+    "activity.links": "libellés textuels, pas identifiants"
+  },
+  "constraints": "Pas de clés étrangères SQL. Valeurs absentes/chaînes vides possibles. Conserver les champs inconnus.",
+  "localPreferences": [
+    "tempo-avatar",
+    "tempo-universe"
+  ],
+  "productionDataIncluded": false
+}

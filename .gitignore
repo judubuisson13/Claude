@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/
+.env
+.env.*
+*.log
+legacy/tempo-v11/node_modules/
